@@ -279,6 +279,7 @@
              (f# (SKI-Head m#) (r# (SKI-Tail m#))))))) l#))))
 
 
+;;;;;;;;;;;;;;;    Examples of using SKI-Map and SKI-Filter    ;;;;;;;;;;;;;;;
 
 (to-num-list (SKI-Map (fn [x] (SKI-Plus x SKI-One)) (SKI-ConsRangeList SKI-Ten)))
 (to-num-list (SKI-Map (fn [x] (SKI-Plus x SKI-One)) (SKI-ConsRangeList SKI-Null)))
@@ -289,12 +290,38 @@
 (to-num-list (SKI-Filter (fn [x] (SKI-Not (SKI-Eq x SKI-Five))) (SKI-ConsRangeList SKI-Ten)))
 (to-num-list (SKI-Filter (fn [x] (SKI-Not (SKI-Eq x SKI-Five))) (SKI-ConsRangeList SKI-One)))
 
-(translate-lambda-to-ski 'SKI-Reducer (template (fn [x# y#] (SKI-Plus x# y#))))
 
+;;;;;;;;;;;;;;;    Examples of using SKI-Reduce    ;;;;;;;;;;;;;;;
 
-(((SKI-Reduce SKI-Reducer SKI-Null (SKI-ConsRangeList SKI-Ten)) ski-plus-one 0))
-(((SKI-Reduce SKI-Reducer SKI-Null (SKI-ConsZeroList SKI-Ten)) ski-plus-one 0))
+(translate-lambda-to-ski 'SKI-Reducer-Ex1 (template (fn [x# y#] (SKI-Plus x# y#))))
 
+(((SKI-Reduce SKI-Reducer-Ex1 SKI-Null (SKI-ConsRangeList SKI-Ten)) ski-plus-one 0))
+(((SKI-Reduce SKI-Reducer-Ex1 SKI-Null (SKI-ConsZeroList SKI-Ten)) ski-plus-one 0))
+
+; Implementation of Concat function for two lists using SKI-Reduce
+(translate-lambda-to-ski 'SKI-L3 '(SKI-Cons SKI-Four (SKI-Cons SKI-Five (SKI-Cons SKI-Six SKI-Nil))))
+(translate-lambda-to-ski 'SKI-Reducer-Concat (template (fn [x# y#] (SKI-Cons x# y#))))
+;appends two lists - notice that the lists should be passed to SKI-Reduce in the reversed order - SKI-Reduce is foldr
+(translate-lambda-to-ski 'SKI-Append (template (fn [l1# l2#] (SKI-Reduce SKI-Reducer-Concat l2# l1#))))
+(to-num-list (SKI-Append SKI-L1 SKI-L3))
+(to-num-list (SKI-Append SKI-L1 (SKI-Cons (SKI-Plus SKI-One SKI-One) SKI-Nil)))
+
+; Implementation of Length function for lists using SKI-Reduce
+(translate-lambda-to-ski 'SKI-Reducer-Length (template (fn [x# y#] (SKI-Plus SKI-One y#))))
+(translate-lambda-to-ski 'SKI-Length (template (fn [l#] (SKI-Reduce SKI-Reducer-Length SKI-Null l#))))
+(((SKI-Length SKI-L1) ski-plus-one 0))
+
+; Implementation of Map using SKI-Reduce
+(translate-lambda-to-ski 'SKI-Reducer-Map (template (fn [f# x# y#] (SKI-Cons (f# x#) y#))))
+(translate-lambda-to-ski 'SKI-Map2 (template (fn [f# l#] (SKI-Reduce (SKI-Reducer-Map f#) SKI-Nil l#))))
+(translate-lambda-to-ski 'SKI-Mapper-Ex1 (template (fn [x#] (SKI-Plus x# SKI-One))))
+(to-num-list (SKI-Map2 SKI-Mapper-Ex1 (SKI-ConsRangeList SKI-Ten)))
+
+; Implementation of Filter using SKI-Reduce
+(translate-lambda-to-ski 'SKI-Reducer-Filter (template (fn [f# x# y#] (SKI-If (f# x#) (SKI-Cons x# y#) y#))))
+(translate-lambda-to-ski 'SKI-Filter2 (template (fn [f# l#] (SKI-Reduce (SKI-Reducer-Filter f#) SKI-Nil l#))))
+(translate-lambda-to-ski 'SKI-Filter-Ex1 (template (fn [x#] (SKI-Not (SKI-Eq x# SKI-Five)))))
+(to-num-list (SKI-Filter2 SKI-Filter-Ex1 (SKI-ConsRangeList SKI-Ten)))
 
 
 ;;;;;;;;;;;;;;;     Y*-combinator     ;;;;;;;;;;;;;;;
@@ -354,8 +381,12 @@
 (def SKI-Sum (S sum I))
 ((SKI-Sum 10))
 ((SKI-Sum-translated 10))
+(((S (S (S (K S) (S (K K) (S (K sum) I))) (K I)) I) 10))
 
 (defn add5 [x] (sum 5 (get-val x)))
+(translate-lambda-to-ski 'SKI-Add5-translated (template (fn [x#] ((fn [y#] (add5 y#)) x#) )))
+((SKI-Add5-translated 10))
 (def SKI-Add5 (S (K add5) I))
-((SKI-Add5 9))
+(((S (K (S (K add5) I)) I) 10))
+((SKI-Add5 10))
 
