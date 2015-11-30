@@ -112,6 +112,7 @@
 
 (translate-lambda-to-ski 'SKI-Minus (template (fn [m# n#] (fn [f# x#] ((n# (fn [t#] (fn [r# s#] (SKI-Pred t# r# s#))) m#) f#  x#)))))
 
+; An alternative definition of 'Minus'
 (translate-lambda-to-ski 'SKI-Minus2 (template (fn [m# n#] ((n# SKI-Pred) m#))))
 
 (((SKI-Minus SKI-Five SKI-Three) ski-plus-one 0))
@@ -278,6 +279,12 @@
         (SKI-If (SKI-IsNil m#) z#
              (f# (SKI-Head m#) (r# (SKI-Tail m#))))))) l#))))
 
+(translate-lambda-to-ski 'SKI-ReduceL (template (fn [f# z# l#]
+  ((SKI-Y
+    (fn [r#]
+      (fn [m# a#]
+        (SKI-If (SKI-IsNil m#) a#
+             (r#  (SKI-Tail m#) (f# (SKI-Head m#) a#) ))))) l# z#))))
 
 ;;;;;;;;;;;;;;;    Examples of using SKI-Map and SKI-Filter    ;;;;;;;;;;;;;;;
 
@@ -295,7 +302,7 @@
 
 (translate-lambda-to-ski 'SKI-Reducer-Ex1 (template (fn [x# y#] (SKI-Plus x# y#))))
 
-(((SKI-Reduce SKI-Reducer-Ex1 SKI-Null (SKI-ConsRangeList SKI-Ten)) ski-plus-one 0))
+(((SKI-ReduceL SKI-Reducer-Ex1 SKI-Null (SKI-ConsRangeList SKI-Ten)) ski-plus-one 0))
 (((SKI-Reduce SKI-Reducer-Ex1 SKI-Null (SKI-ConsZeroList SKI-Ten)) ski-plus-one 0))
 
 ; Implementation of Concat function for two lists using SKI-Reduce
@@ -316,6 +323,14 @@
 (translate-lambda-to-ski 'SKI-Map2 (template (fn [f# l#] (SKI-Reduce (SKI-Reducer-Map f#) SKI-Nil l#))))
 (translate-lambda-to-ski 'SKI-Mapper-Ex1 (template (fn [x#] (SKI-Plus x# SKI-One))))
 (to-num-list (SKI-Map2 SKI-Mapper-Ex1 (SKI-ConsRangeList SKI-Ten)))
+
+; Implementation of Map using SKI-ReduceL
+(translate-lambda-to-ski 'SKI-Reducer-MapL (template (fn [f# x# y#] (SKI-Append y# (SKI-Cons (f# x#) SKI-Nil)))))
+(translate-lambda-to-ski 'SKI-Map2L (template (fn [f# l#] (SKI-ReduceL (SKI-Reducer-MapL f#) SKI-Nil l#))))
+;(translate-lambda-to-ski 'SKI-Mapper-Ex1 (template (fn [x#] (SKI-Plus x# SKI-One))))
+(to-num-list (SKI-Map2L SKI-Mapper-Ex1 (SKI-ConsRangeList SKI-Ten)))
+
+
 
 ; Implementation of Filter using SKI-Reduce
 (translate-lambda-to-ski 'SKI-Reducer-Filter (template (fn [f# x# y#] (SKI-If (f# x#) (SKI-Cons x# y#) y#))))
@@ -374,19 +389,28 @@
 (clojure.pprint/pprint ski-translations)
 
 
-;;;BLOG example - remove me
+;;;;;;;;;;;;;;;     Blog post examples     ;;;;;;;;;;;;;;;
 (defn sum-def [x y] (+ (get-val x) (get-val y)))
 (def sum (variadize sum-def))
-(translate-lambda-to-ski 'SKI-Sum-translated (template (fn [x#] ((fn [y#] (sum x# y#)) x#) )))
-(def SKI-Sum (S sum I))
-((SKI-Sum 10))
-((SKI-Sum-translated 10))
+
+(def SKI-Double (S sum I))
+((SKI-Double 10))
+
+(translate-lambda-to-ski 'SKI-Double-Translated (template (fn [z#] ((fn [v#] (sum z# v#)) z#) )))
+((SKI-Double-Translated 10))
+(get @ski-translations 'SKI-Double-Translated)
 (((S (S (S (K S) (S (K K) (S (K sum) I))) (K I)) I) 10))
 
-(defn add5 [x] (sum 5 (get-val x)))
-(translate-lambda-to-ski 'SKI-Add5-translated (template (fn [x#] ((fn [y#] (add5 y#)) x#) )))
-((SKI-Add5-translated 10))
+
+(defn add5-def [x] (sum 5 (get-val x)))
+(def add5 (variadize add5-def))
 (def SKI-Add5 (S (K add5) I))
-(((S (K (S (K add5) I)) I) 10))
 ((SKI-Add5 10))
 
+(translate-lambda-to-ski 'SKI-Add5-Translated (template (fn [x#] ((fn [y#] (add5 y#)) x#) )))
+((SKI-Add5-Translated 10))
+(get @ski-translations 'SKI-Add5-Translated)
+(((S (K (S (K add5) I)) I) 10))
+
+(get @sources 'SKI-Minus2)
+(get @expanded-sources 'SKI-Minus2)

@@ -44,32 +44,34 @@
   )
 
 ; This functions deals with expressions of type
-; (E1 E2 E3 ...). Several cases are possible:
+; (E1 E2 E3 ...). Several cases are possible, '->' means "is translated to":
 ; 1. (E1) -> (E1)
-; 2. (E1 E2) -> (E1 E2)
-; 3. (E1 E2 E3) see 4.
-; 4. (E1 E2 E3 E4) -> ((E1 E2 E3) E4)
-; 5. (E1 E2 E3 E4 ...) see 4.
+; 2. (E1 E2) -> (E1 E2) (this is our base case; expressions with more elements are reduced to this case)
+; 3. (E1 E2 E3) -> ((E1 E2) E3) (and apply point 2. twice)
+; 4. (E1 E2 E3 E4) -> ((E1 E2 E3) E4) -> (((E1 E2) E3) E4) (and apply point 2. thrice)
+; 5. (E1 E2 E3 E4 ...) (similar to the above)
 (defn translate-application [exp]
   (if (coll? exp)
     (cond
       (= (count exp) 0) (throw (Exception. "should not be an empty list"))
-      (= (count exp) 1) (list (translate-dispatch (first exp))) ; evaluate the function
+      (= (count exp) 1) (list (translate-dispatch (first exp)))
       (= (count exp) 2) (list (translate-dispatch (first exp)) (translate-dispatch (last exp))) ; we don't want to convert (E1 E2) to ((E1) E2) ...
-      ;:else (list (translate-application (apply list (butlast exp))) (last exp))) ; (apply list ...) converts seq back to list
-      :else (translate-application (list (apply list (butlast exp)) (last exp))))
+      :else (translate-application (list (apply list (butlast exp)) (last exp)))) ; (apply list ...) converts seq back to list
     (throw (Exception. "should be an application"))
     )
   )
 
+
+; This is function determines if var 'x' is present in 'expr'. 'expr' can have a nsted structure
 (defn contains-var? [x exp]
   (if (list? exp)
-    (true? (some #(= x %) (flatten exp)))                   ; we want the function to return 'true' or 'false'. 'some' returns 'nil' if no matching element is found.
-    ;else
+    (true? (some #(= x %) (flatten exp))) ; we want the function to return 'true' or 'false'. 'some' returns 'nil' if no matching element is found.
     (= x exp)
     )
   )
 
+; This function takes a var 'x' and "pushes it out" of the expression 'expr', i.e. it removes all instances of 'x' and replaces them with
+; the appropriate combinators.
 (defn abstract-dispatch [x exp]
   (if (contains-var? x exp)
     (if (coll? exp)
@@ -81,7 +83,7 @@
       ;else
       (if (= x exp)
         'I
-        (list 'K exp)                                       ; this is redundant as it should be taken care of by the external if
+        (list 'K exp) ; this is redundant as it should be taken care of by the external if
         )
       )
     ;else
@@ -90,11 +92,19 @@
   )
 
 
-; Support for substitutions
+;;;;;;;;;;;;;;;     Support for substitutions     ;;;;;;;;;;;;;;;
+
+; This atom stores all definitions of functions that were translated.
 (def ^{:doc "Atom that contains all sources."}
 sources
   (atom {}))
 
+; This atom stores all expanded definitions of functions that were translated.
+(def ^{:doc "Atom that contains all expanded sources."}
+expanded-sources
+  (atom {}))
+
+; This atom stores all SKI translations.
 (def ^{:doc "Atom that contains all translations."}
 ski-translations
   (atom {}))
@@ -103,11 +113,12 @@ ski-translations
   (swap! dest assoc func-name func-def)
   )
 
-;;;;;;;;;;;;
+; This function finds all function names in the 'func-def' that were previously translated.
 (defn get-symbols-to-substitute [translation-map func-def]
   (clojure.set/intersection (set (flatten func-def)) (set (keys translation-map))))
 
-
+; Substitues the function names in the body of the  'func-def' with their definitions from 'translation map'. We use recursion
+; to make sure that all definitions are recursively expanded.
 (defn substitute-translations [translation-map func-def]
   (if-let [symbols-to-substitute (seq (get-symbols-to-substitute translation-map func-def))]
     (recur translation-map (read-string (reduce (fn [accum next-val]
@@ -126,14 +137,20 @@ ski-translations
     ))
 
 
+
+; This function instantiates expr 'd' under name 'n'.
 (defn gen-def
   [n d]
   (let [n (symbol n)]
     (eval `(def ~n ~d))))
 
 
+; This is the entry point function for the translation. It expands all previously defined names in the 'func-def', translates it to SKI
+; calculus, adds 'func-def' to the 'sources', adds the resulting translation to 'ski-translations', and prints the translation to the console.
 (defn translate-lambda-to-ski [func-name func-def]
-  (let [translated-def (translate-dispatch (substitute-translations @sources func-def))
+  (let [expanded-func-def (substitute-translations @sources func-def)
+        translated-def (translate-dispatch expanded-func-def)
+        _ (add-translation expanded-sources func-name expanded-func-def)
         _ (add-translation sources func-name func-def)
         _ (add-translation ski-translations func-name translated-def)
         _ (println "function " func-name " translated to " translated-def)
