@@ -37,9 +37,27 @@
 (to-int (X-Fact X-Five))
 (to-int (X-Z Fact-Maker-Lambda X-Five))
 
+
 (get iota-translations "X-Fact")
 (get iota-translations "X-Five")
 
+
+(to-int (X-McCarthy X-Eleven))
+(to-int (X-McCarthy (X-Succ (X-Succ X-Hundred))))
+
+(get iota-translations "X-McCarthy")
+
+(to-int-list (X-QuickSort X-L-Not-Sorted))
+
+(get iota-translations "X-QuickSort")
+
+(to-int-list (X-Eratosthenes-Sieve (X-Tail (X-ConsRangeList X-Ten))))
+
+(get iota-translations "X-Eratosthenes-Sieve")
+
+(to-int (X-Ackermann (X-Cons X-Three (X-Cons X-Four X-Nil))))
+
+(get iota-translations "X-Ackermann")
 
 (to-bool (X-Even? X-Five))
 (to-bool (X-Odd? X-Five))
