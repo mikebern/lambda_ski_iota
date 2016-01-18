@@ -105,7 +105,7 @@ expanded-sources
   (atom {}))
 
 ; This atom stores all SKI translations.
-(def ^{:doc "Atom that contains all translations."}
+(def ^{:doc "Atom that contains all ski translations."}
 ski-translations
   (atom {}))
 

@@ -16,7 +16,7 @@
 (modify-func-name "SKI-If" "SKI" "X")
 
 (defn translate-ski-to-iota [ski-definitions iota-mapping]
-  (into {} (for [[k v] ski-definitions] [(modify-func-name k "SKI" "X") (substitute-translations iota-mapping v)]))
+  (into {} (for [[k v] ski-definitions] [(symbol (modify-func-name k "SKI" "X")) (substitute-translations iota-mapping v)]))
   )
 
 (def iota-translations (translate-ski-to-iota @ski-translations iota-mapping))
@@ -28,7 +28,7 @@
 
 ;;;;;;;;;;;;;;;     Examples     ;;;;;;;;;;;;;;;
 
-(println (get iota-translations "X-True"))
+(println (get iota-translations 'X-True))
 
 
 (to-bool X-True)
@@ -38,26 +38,26 @@
 (to-int (X-Z Fact-Maker-Lambda X-Five))
 
 
-(get iota-translations "X-Fact")
-(get iota-translations "X-Five")
+(get iota-translations 'X-Fact)
+(get iota-translations 'X-Five)
 
 
 (to-int (X-McCarthy X-Eleven))
 (to-int (X-McCarthy (X-Succ (X-Succ X-Hundred))))
 
-(get iota-translations "X-McCarthy")
+(get iota-translations 'X-McCarthy)
 
 (to-int-list (X-QuickSort X-L-Not-Sorted))
 
-(get iota-translations "X-QuickSort")
+(get iota-translations 'X-QuickSort)
 
 (to-int-list (X-Eratosthenes-Sieve (X-Tail (X-ConsRangeList X-Ten))))
 
-(get iota-translations "X-Eratosthenes-Sieve")
+(get iota-translations 'X-Eratosthenes-Sieve)
 
-(to-int (X-Ackermann (X-Cons X-Three (X-Cons X-Four X-Nil))))
+(to-int (X-Ackermann (X-Cons X-Three (X-Cons X-Three X-Nil))))
 
-(get iota-translations "X-Ackermann")
+(get iota-translations 'X-Ackermann)
 
 (to-bool (X-Even? X-Five))
 (to-bool (X-Odd? X-Five))
@@ -68,5 +68,5 @@
 (to-bool (X-Even? X-FortyTwo))
 (to-bool (X-Odd? X-FortyTwo))
 
-(get iota-translations "X-Y*")
-(get iota-translations "X-FortyTwo")
+(get iota-translations 'X-Y*)
+(get iota-translations 'X-FortyTwo)

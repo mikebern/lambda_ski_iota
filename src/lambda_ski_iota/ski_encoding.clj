@@ -191,8 +191,6 @@
            (fn [n#] (SKI-If (SKI-Eq?  SKI-Zero n#) SKI-One (SKI-Mul n# (g# (SKI-Minus n# SKI-One))))))))
 
 
-(to-int ((SKI-Y SKI-Fact-Maker) SKI-Five))
-
 (translate-lambda-to-ski 'SKI-Fact '(SKI-Y SKI-Fact-Maker))
 (to-int (SKI-Fact SKI-Five))
 
@@ -249,7 +247,7 @@
 
 (translate-lambda-to-ski 'SKI-Head (template (fn [l#] (SKI-First (SKI-Second l#)))))
 (translate-lambda-to-ski 'SKI-Tail (template (fn [l#] (SKI-Second (SKI-Second l#)))))
-
+(translate-lambda-to-ski 'SKI-Second-Elem  (template (fn [l#] (SKI-Head (SKI-Tail l#)))))
 
 (translate-lambda-to-ski 'SKI-ConsZeroList (template (fn [n#] (n# (fn [l#] (SKI-Cons SKI-Zero l#)) SKI-Nil))))
 
@@ -313,6 +311,7 @@
                      ( r# (SKI-Tail m#) )))))) l#))))
 
 
+;fold right
 (translate-lambda-to-ski 'SKI-Reduce (template (fn [f# z# l#]
   ((SKI-Y
     (fn [r#]
@@ -320,12 +319,19 @@
         (SKI-If (SKI-Nil? m#) z#
              (f# (SKI-Head m#) (r# (SKI-Tail m#))))))) l#))))
 
+;fold left
 (translate-lambda-to-ski 'SKI-ReduceL (template (fn [f# z# l#]
   ((SKI-Y
     (fn [r#]
       (fn [m# a#]
         (SKI-If (SKI-Nil? m#) a#
              (r#  (SKI-Tail m#) (f# (SKI-Head m#) a#) ))))) l# z#))))
+
+
+
+; fold left by using fold right
+; see  http://stackoverflow.com/questions/6172004/writing-foldl-using-foldr
+(translate-lambda-to-ski 'SKI-ReduceL2 (template (fn [f# z# l#] (SKI-Reduce (fn [b# g# a#] (g# (f# a# b#))) I l# z#) )))
 
 ;;;;;;;;;;;;;;;    Examples of using SKI-Map and SKI-Filter    ;;;;;;;;;;;;;;;
 
@@ -338,9 +344,6 @@
 (to-int-list (SKI-Filter (fn [x] (SKI-Not (SKI-Eq?  x SKI-Five))) (SKI-ConsRangeList SKI-Ten)))
 (to-int-list (SKI-Filter (fn [x] (SKI-Not (SKI-Eq?  x SKI-Five))) (SKI-ConsRangeList SKI-One)))
 
-; ReduceL using ReduceR
-; see  http://stackoverflow.com/questions/6172004/writing-foldl-using-foldr
-(translate-lambda-to-ski 'SKI-ReduceL2 (template (fn [f# z# l#] (SKI-Reduce (fn [b# g# a#] (g# (f# a# b#))) I l# z#) )))
 
 ;;;;;;;;;;;;;;;    Examples of using SKI-Reduce    ;;;;;;;;;;;;;;;
 
@@ -351,14 +354,17 @@
 (to-int (SKI-Reduce SKI-Reducer-Ex1 SKI-Zero (SKI-ConsZeroList SKI-Ten)))
 (to-int (SKI-ReduceL2 SKI-Reducer-Ex1 SKI-Zero (SKI-ConsRangeList SKI-Ten)))
 
-; Some interesting lambda functions: http://jwodder.freeshell.org/lambda.html
+;;;;;;;;;;;;;;; Some interesting lambda functions ;;;;;;;;;;;;;;;
+
+; http://jwodder.freeshell.org/lambda.html
+
 ; Implementation of Concat function for two lists using SKI-Reduce
 (translate-lambda-to-ski 'SKI-L3 '(SKI-Cons SKI-Four (SKI-Cons SKI-Five (SKI-Cons SKI-Six SKI-Nil))))
 (translate-lambda-to-ski 'SKI-Reducer-Concat (template (fn [x# y#] (SKI-Cons x# y#))))
 ;appends two lists - notice that the lists should be passed to SKI-Reduce in the reversed order - SKI-Reduce is foldr
-(translate-lambda-to-ski 'SKI-Append (template (fn [l1# l2#] (SKI-Reduce SKI-Reducer-Concat l2# l1#))))
-(to-int-list (SKI-Append SKI-L1 SKI-L3))
-(to-int-list (SKI-Append SKI-L1 (SKI-Cons (SKI-Plus SKI-One SKI-One) SKI-Nil)))
+(translate-lambda-to-ski 'SKI-Concat (template (fn [l1# l2#] (SKI-Reduce SKI-Reducer-Concat l2# l1#))))
+(to-int-list (SKI-Concat SKI-L1 SKI-L3))
+(to-int-list (SKI-Concat SKI-L1 (SKI-Cons (SKI-Plus SKI-One SKI-One) SKI-Nil)))
 
 ; Implementation of Length function for lists using SKI-Reduce
 (translate-lambda-to-ski 'SKI-Reducer-Length (template (fn [x# y#] (SKI-Plus SKI-One y#))))
@@ -366,6 +372,7 @@
 
 
 (to-int (SKI-Length SKI-L1))
+
 ; Implementation of Map using SKI-Reduce
 (translate-lambda-to-ski 'SKI-Reducer-Map (template (fn [f# x# y#] (SKI-Cons (f# x#) y#))))
 (translate-lambda-to-ski 'SKI-Map2 (template (fn [f# l#] (SKI-Reduce (SKI-Reducer-Map f#) SKI-Nil l#))))
@@ -373,9 +380,8 @@
 (to-int-list (SKI-Map2 SKI-Mapper-Ex1 (SKI-ConsRangeList SKI-Ten)))
 
 ; Implementation of Map using SKI-ReduceL
-(translate-lambda-to-ski 'SKI-Reducer-MapL (template (fn [f# x# y#] (SKI-Append y# (SKI-Cons (f# x#) SKI-Nil)))))
+(translate-lambda-to-ski 'SKI-Reducer-MapL (template (fn [f# x# y#] (SKI-Concat y# (SKI-Cons (f# x#) SKI-Nil)))))
 (translate-lambda-to-ski 'SKI-Map2L (template (fn [f# l#] (SKI-ReduceL (SKI-Reducer-MapL f#) SKI-Nil l#))))
-;(translate-lambda-to-ski 'SKI-Mapper-Ex1 (template (fn [x#] (SKI-Plus x# SKI-One))))
 (to-int-list (SKI-Map2L SKI-Mapper-Ex1 (SKI-ConsRangeList SKI-Ten)))
 
 
@@ -391,9 +397,9 @@
 ;                                                                           (f (filter (fn [y3] (> y3 (first x))) x))) ))))
 
 
-(translate-lambda-to-ski 'SKI-QuickSort-Maker (template  (fn [f#] (fn [x#]  (SKI-If (SKI-Nil? x#) SKI-Nil (SKI-Append (f# (SKI-Filter (fn [y1#] (SKI-Lt? y1# (SKI-Head x#))) x#))
-                                                                  (SKI-Append (SKI-Filter (fn [y2#] (SKI-Eq?  y2# (SKI-Head x#))) x#)
-                                                                           (f# (SKI-Filter (fn [y3#] (SKI-Le(SKI-Head x#) y3#)) x#))) ))))))
+(translate-lambda-to-ski 'SKI-QuickSort-Maker (template  (fn [f#] (fn [x#]  (SKI-If (SKI-Nil? x#) SKI-Nil (SKI-Concat (f# (SKI-Filter (fn [y1#] (SKI-Lt? y1# (SKI-Head x#))) x#))
+                                                                  (SKI-Concat (SKI-Filter (fn [y2#] (SKI-Eq?  y2# (SKI-Head x#))) x#)
+                                                                           (f# (SKI-Filter (fn [y3#] (SKI-Lt?(SKI-Head x#) y3#)) x#))) ))))))
 
 (translate-lambda-to-ski 'SKI-L-Not-Sorted '(SKI-Cons SKI-Three (SKI-Cons SKI-One (SKI-Cons SKI-Two SKI-Nil))))
 (translate-lambda-to-ski 'SKI-QuickSort '(SKI-Y SKI-QuickSort-Maker))
@@ -433,7 +439,6 @@
 (to-int (SKI-Apply SKI-Test-Sum SKI-L1))
 
 
-(translate-lambda-to-ski 'SKI-Second-Elem  (template (fn [l#] (SKI-Head (SKI-Tail l#)))))
 (translate-lambda-to-ski 'SKI-Make-Even?  (template (fn [e-and-o#] (fn [n#] (SKI-Or (SKI-Eq?  SKI-Zero n#) ((SKI-Second-Elem e-and-o#) (SKI-Minus n# SKI-One)))))))
 (translate-lambda-to-ski 'SKI-Make-Odd?  (template (fn [e-and-o#] (fn [n#] (SKI-And (SKI-Not (SKI-Eq?  SKI-Zero n#)) ((SKI-Head e-and-o#) (SKI-Minus n# SKI-One)))))))
 (translate-lambda-to-ski 'SKI-Even-Odd '(SKI-Cons SKI-Make-Even? (SKI-Cons SKI-Make-Odd? SKI-Nil)))

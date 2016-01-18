@@ -85,6 +85,12 @@
 (is (= (translate-dispatch '(fn [x] (fn [y] (x y)))) '(S (S (K S) (S (K K) I)) (K I))))
 ))
 
+
+(deftest translate-dispatch-test-12
+(testing "translate-dispatch"
+(is (= (translate-dispatch '(fn [x y z] 5)) '(K (K (K 5)))))
+))
+
 (def tm {'x '(1 2 3), 'y  'yy, 'yy '(4 5 6), 'y* '(7 8 9), 'z? '(10 11 12)})
 (def fd '(x (y [z yy x-x u y* yy* yy*x x z?])))
 
@@ -97,5 +103,6 @@
 (testing "substitute-translations"
 (is (= (substitute-translations tm fd) '((1 2 3) ((4 5 6) [z (4 5 6) x-x u (7 8 9) yy* yy*x (1 2 3) (10 11 12)]))))
 ))
+
 
 (run-tests)
