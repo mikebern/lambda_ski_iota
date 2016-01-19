@@ -41,7 +41,7 @@
 )
 
 (deftest K-test-2
-(is (= (K (fn [x] x) 2 3) 3))
+(is (= ((K (fn [x] x) 2 3)) 3))
 )
 
 
