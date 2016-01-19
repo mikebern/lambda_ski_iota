@@ -62,7 +62,7 @@
 (defn variadize-strict
       ([fnct] (variadize-strict fnct (arg-count fnct)))
   ([fnct num-args]
-   (if (= num-args 0) (fnct)
+   (if (zero?  num-args) (fnct)
      (fn [& args]
        (cond
          (> (count args) num-args) (apply (apply fnct (take num-args args)) (drop num-args args))
@@ -78,7 +78,7 @@
 (defn variadize
       ([fnct] (variadize fnct (arg-count fnct)))
   ([fnct num-args]
-   (if (= num-args 0) (DelayedEval. (delay (fnct)))
+   (if (zero?  num-args) (DelayedEval. (delay (fnct)))
      (fn [& args]
        (cond
          (> (count args) num-args)

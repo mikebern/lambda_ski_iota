@@ -82,7 +82,7 @@
 ;;;;;;;;;;;;;;;     Arithmetics     ;;;;;;;;;;;;;;;
 
 ; helper functions to convert Church numerals to numbers
-(defn ski-plus-one [x] (+ 1 (get-val x)))
+(defn ski-plus-one [x] (inc (get-val x)))
 (defn ski-concat [x] (str (get-val x) "|"))
 
 

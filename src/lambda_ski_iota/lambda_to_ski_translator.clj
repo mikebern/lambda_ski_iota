@@ -37,7 +37,7 @@
 (defn translate-function [f]
   (let [[fn-sym [x & rst-args] body] f]
     (cond
-      (= (count rst-args) 0) (abstract-dispatch x (translate-dispatch body))
+      (zero? (count rst-args)) (abstract-dispatch x (translate-dispatch body))
       :else (abstract-dispatch x (translate-dispatch (list fn-sym rst-args body)))
       )
     )
@@ -53,7 +53,7 @@
 (defn translate-application [exp]
   (if (coll? exp)
     (cond
-      (= (count exp) 0) (throw (Exception. "should not be an empty list"))
+      (zero? (count exp)) (throw (Exception. "should not be an empty list"))
       (= (count exp) 1) (list (translate-dispatch (first exp)))
       (= (count exp) 2) (list (translate-dispatch (first exp)) (translate-dispatch (last exp))) ; we don't want to convert (E1 E2) to ((E1) E2) ...
       :else (translate-application (list (apply list (butlast exp)) (last exp)))) ; (apply list ...) converts seq back to list
@@ -76,7 +76,7 @@
   (if (contains-var? x exp)
     (if (coll? exp)
       (cond
-        (= (count exp) 0) (throw (Exception. "should not be an empty list"))
+        (zero? (count exp)) (throw (Exception. "should not be an empty list"))
         (= (count exp) 1) (throw (Exception. "not supported")) ;(abstract-dispatch x (first exp))
         (= (count exp) 2) (list 'S (abstract-dispatch x (first exp)) (abstract-dispatch x (last exp)))
         :else (abstract-dispatch x (list (apply list (butlast exp)) (last exp)))) ; just convert to (E1 E2) case and call the function again
