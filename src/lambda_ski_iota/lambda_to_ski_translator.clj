@@ -16,15 +16,11 @@
         (let [[f & rst] exp]
           (if (= 'fn f)
             (translate-function exp)
-            (translate-application exp)
-            ))
-    :else (translate-term exp)
-    )
-  )
+            (translate-application exp)))
+        :else (translate-term exp)))
 
 ; Not much to do to translate a term
 (defn translate-term [t] t)
-
 
 ; This function translates the function denfinition.
 ; It get a function as an input and returns a transaltion
@@ -38,10 +34,7 @@
   (let [[fn-sym [x & rst-args] body] f]
     (cond
       (zero? (count rst-args)) (abstract-dispatch x (translate-dispatch body))
-      :else (abstract-dispatch x (translate-dispatch (list fn-sym rst-args body)))
-      )
-    )
-  )
+      :else (abstract-dispatch x (translate-dispatch (list fn-sym rst-args body))))))
 
 ; This functions deals with expressions of type
 ; (E1 E2 E3 ...). Several cases are possible, '->' means "is translated to":
@@ -57,18 +50,13 @@
       (= (count exp) 1) (list (translate-dispatch (first exp)))
       (= (count exp) 2) (list (translate-dispatch (first exp)) (translate-dispatch (last exp))) ; we don't want to convert (E1 E2) to ((E1) E2) ...
       :else (translate-application (list (apply list (butlast exp)) (last exp)))) ; (apply list ...) converts seq back to list
-    (throw (Exception. "should be an application"))
-    )
-  )
-
+    (throw (Exception. "should be an application"))))
 
 ; This is function determines if var 'x' is present in 'expr'. 'expr' can have a nsted structure
 (defn contains-var? [x exp]
   (if (list? exp)
     (true? (some #(= x %) (flatten exp))) ; we want the function to return 'true' or 'false'. 'some' returns 'nil' if no matching element is found.
-    (= x exp)
-    )
-  )
+    (= x exp)))
 
 ; This function takes a var 'x' and "pushes it out" of the expression 'expr', i.e. it removes all instances of 'x' and replaces them with
 ; the appropriate combinators.
@@ -84,34 +72,29 @@
       (if (= x exp)
         'I
         (list 'K exp) ; this is redundant as it should be taken care of by the external if
-        )
-      )
+))
     ;else
-    (list 'K exp)
-    )
-  )
-
+    (list 'K exp)))
 
 ;;;;;;;;;;;;;;;     Support for substitutions     ;;;;;;;;;;;;;;;
 
 ; This atom stores all definitions of functions that were translated.
 (def ^{:doc "Atom that contains all sources."}
-sources
+  sources
   (atom {}))
 
 ; This atom stores all expanded definitions of functions that were translated.
 (def ^{:doc "Atom that contains all expanded sources."}
-expanded-sources
+  expanded-sources
   (atom {}))
 
 ; This atom stores all SKI translations.
 (def ^{:doc "Atom that contains all ski translations."}
-ski-translations
+  ski-translations
   (atom {}))
 
 (defn add-translation [dest func-name func-def]
-  (swap! dest assoc func-name func-def)
-  )
+  (swap! dest assoc func-name func-def))
 
 ; This function finds all function names in the 'func-def' that were previously translated.
 (defn get-symbols-to-substitute [translation-map func-def]
@@ -133,17 +116,13 @@ ski-translations
                                                                                            (clojure.string/replace (clojure.string/replace (first next-val) "*" "\\*") "?" "\\?")
                                                                                            "(?![\\w|\\-|\\?|\\*])"))
                                                                           (str (last next-val)))) (str func-def) (select-keys translation-map symbols-to-substitute))))
-    func-def
-    ))
-
-
+    func-def))
 
 ; This function instantiates expr 'd' under name 'n'.
 (defn gen-def
   [n d]
   (let [n (symbol n)]
     (eval `(def ~n ~d))))
-
 
 ; This is the entry point function for the translation. It expands all previously defined names in the 'func-def', translates it to SKI
 ; calculus, adds 'func-def' to the 'sources', adds the resulting translation to 'ski-translations', and prints the translation to the console.
@@ -153,15 +132,6 @@ ski-translations
         _ (add-translation expanded-sources func-name expanded-func-def)
         _ (add-translation sources func-name func-def)
         _ (add-translation ski-translations func-name translated-def)
-        _ (println "function " func-name " translated to " translated-def)
-        ]
-    (gen-def func-name translated-def))
-  )
-
-
-
-
-
-
-
+        _ (println "function " func-name " translated to " translated-def)]
+    (gen-def func-name translated-def)))
 
