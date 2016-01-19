@@ -311,11 +311,9 @@
 
 ;;;;;;;;;;;;;;;    Examples of using SKI-Reduce    ;;;;;;;;;;;;;;;
 
-(translate-lambda-to-ski 'SKI-Reducer-Ex1 (template (fn [x# y#] (SKI-Plus x# y#))))
-
-(to-int (SKI-ReduceL SKI-Reducer-Ex1 SKI-Zero (SKI-ConsRangeList SKI-Ten)))
-(to-int (SKI-Reduce SKI-Reducer-Ex1 SKI-Zero (SKI-ConsZeroList SKI-Ten)))
-(to-int (SKI-ReduceL2 SKI-Reducer-Ex1 SKI-Zero (SKI-ConsRangeList SKI-Ten)))
+(to-int (SKI-ReduceL SKI-Plus SKI-Zero (SKI-ConsRangeList SKI-Ten)))
+(to-int (SKI-Reduce SKI-Plus SKI-Zero (SKI-ConsZeroList SKI-Ten)))
+(to-int (SKI-ReduceL2 SKI-Plus SKI-Zero (SKI-ConsRangeList SKI-Ten)))
 
 ;;;;;;;;;;;;;;; Some interesting lambda functions ;;;;;;;;;;;;;;;
 
@@ -323,9 +321,9 @@
 
 ; Implementation of Concat function for two lists using SKI-Reduce
 (translate-lambda-to-ski 'SKI-L3 '(SKI-Cons SKI-Four (SKI-Cons SKI-Five (SKI-Cons SKI-Six SKI-Nil))))
-(translate-lambda-to-ski 'SKI-Reducer-Concat (template (fn [x# y#] (SKI-Cons x# y#))))
+
 ;appends two lists - notice that the lists should be passed to SKI-Reduce in the reversed order - SKI-Reduce is foldr
-(translate-lambda-to-ski 'SKI-Concat (template (fn [l1# l2#] (SKI-Reduce SKI-Reducer-Concat l2# l1#))))
+(translate-lambda-to-ski 'SKI-Concat (template (fn [l1# l2#] (SKI-Reduce SKI-Cons l2# l1#))))
 (to-int-list (SKI-Concat SKI-L1 SKI-L3))
 (to-int-list (SKI-Concat SKI-L1 (SKI-Cons (SKI-Plus SKI-One SKI-One) SKI-Nil)))
 
@@ -352,19 +350,6 @@
 (translate-lambda-to-ski 'SKI-Filter-Ex1 (template (fn [x#] (SKI-Not (SKI-Eq?  x# SKI-Five)))))
 (to-int-list (SKI-Filter2 SKI-Filter-Ex1 (SKI-ConsRangeList SKI-Ten)))
 
-; QuickSort
-;(defn quicksort-maker [f]  (fn [x]  (if (empty? x) '() (concat (f (filter (fn [y1] (< y1 (first x))) x))
-;                                                                  (concat (filter (fn [y2] (= y2 (first x))) x)
-;                                                                           (f (filter (fn [y3] (> y3 (first x))) x))) ))))
-
-
-(translate-lambda-to-ski 'SKI-QuickSort-Maker (template  (fn [f#] (fn [x#]  (SKI-If (SKI-Nil? x#) SKI-Nil (SKI-Concat (f# (SKI-Filter (fn [y1#] (SKI-Lt? y1# (SKI-Head x#))) x#))
-                                                                                                                      (SKI-Concat (SKI-Filter (fn [y2#] (SKI-Eq?  y2# (SKI-Head x#))) x#)
-                                                                                                                                  (f# (SKI-Filter (fn [y3#] (SKI-Lt? (SKI-Head x#) y3#)) x#)))))))))
-
-(translate-lambda-to-ski 'SKI-L-Not-Sorted '(SKI-Cons SKI-Three (SKI-Cons SKI-One (SKI-Cons SKI-Two SKI-Nil))))
-(translate-lambda-to-ski 'SKI-QuickSort '(SKI-Y SKI-QuickSort-Maker))
-(to-int-list (SKI-QuickSort SKI-L-Not-Sorted))
 
 ; Ackermann
 
@@ -382,6 +367,39 @@
 (translate-lambda-to-ski 'SKI-Ackermann '(SKI-Y SKI-Ackermann-Maker))
 
 (to-int (SKI-Ackermann (SKI-Cons SKI-Three (SKI-Cons SKI-Four SKI-Nil))))
+
+
+; QuickSort
+;(defn quicksort-maker [f]  (fn [x]  (if (empty? x) '() (concat (f (filter (fn [y1] (< y1 (first x))) x))
+;                                                                  (concat (filter (fn [y2] (= y2 (first x))) x)
+;                                                                           (f (filter (fn [y3] (> y3 (first x))) x))) ))))
+
+
+(translate-lambda-to-ski 'SKI-QuickSort-Maker (template  (fn [f#] (fn [x#]  (SKI-If (SKI-Nil? x#) SKI-Nil (SKI-Concat (f# (SKI-Filter (fn [y1#] (SKI-Lt? y1# (SKI-Head x#))) x#))
+                                                                                                                      (SKI-Concat (SKI-Filter (fn [y2#] (SKI-Eq?  y2# (SKI-Head x#))) x#)
+                                                                                                                                  (f# (SKI-Filter (fn [y3#] (SKI-Lt? (SKI-Head x#) y3#)) x#)))))))))
+
+(translate-lambda-to-ski 'SKI-L-Not-Sorted '(SKI-Cons SKI-Three (SKI-Cons SKI-One (SKI-Cons SKI-Two SKI-Nil))))
+(translate-lambda-to-ski 'SKI-QuickSort '(SKI-Y SKI-QuickSort-Maker))
+(to-int-list (SKI-QuickSort SKI-L-Not-Sorted))
+
+
+; Sieve of Eratosthenes
+(translate-lambda-to-ski 'SKI-Mod-Impl-Maker (template  (fn [f#] (fn [p#] (SKI-If (SKI-Lt? (SKI-Head p#) (SKI-Second-Elem p#)) (SKI-Head p#) (f# (SKI-Cons (SKI-Minus (SKI-Head p#) (SKI-Second-Elem p#)) (SKI-Cons (SKI-Second-Elem p#) SKI-Nil))))))))
+(translate-lambda-to-ski 'SKI-Mod-Impl '(SKI-Y SKI-Mod-Impl-Maker))
+(translate-lambda-to-ski 'SKI-Mod (template (fn [x# y#] (SKI-Mod-Impl (SKI-Cons x# (SKI-Cons y# SKI-Nil))))))
+
+(to-int (SKI-Mod SKI-Seven SKI-Five))
+(to-int (SKI-Mod SKI-Five SKI-Seven))
+(to-int (SKI-Mod SKI-Five SKI-Five))
+
+;(defn eratosthenes-sieve-maker [f] (fn [l] (if (empty? l) '()  (cons (first l) (f (filter (fn [x] (not (= 0 (mod x (first l))))) l))))))
+
+(translate-lambda-to-ski 'SKI-Eratosthenes-Sieve-Maker (template (fn [f#] (fn [l#] (SKI-If (SKI-Nil? l#) SKI-Nil (SKI-Cons (SKI-Head l#) (f# (SKI-Filter (fn [x#] (SKI-Not (SKI-Eq?  SKI-Zero (SKI-Mod x# (SKI-Head l#))))) l#))))))))
+(translate-lambda-to-ski 'SKI-Eratosthenes-Sieve '(SKI-Y SKI-Eratosthenes-Sieve-Maker))
+(to-int-list (SKI-Eratosthenes-Sieve (SKI-Tail (SKI-ConsRangeList SKI-Ten))))
+
+
 
 ;;;;;;;;;;;;;;;     Y*-combinator     ;;;;;;;;;;;;;;;
 
@@ -422,20 +440,6 @@
 (to-bool (SKI-Even? SKI-Five))
 (to-bool (SKI-Odd? SKI-Five))
 
-; Sieve of Eratosthenes
-(translate-lambda-to-ski 'SKI-Mod-Impl-Maker (template  (fn [f#] (fn [p#] (SKI-If (SKI-Lt? (SKI-Head p#) (SKI-Second-Elem p#)) (SKI-Head p#) (f# (SKI-Cons (SKI-Minus (SKI-Head p#) (SKI-Second-Elem p#)) (SKI-Cons (SKI-Second-Elem p#) SKI-Nil))))))))
-(translate-lambda-to-ski 'SKI-Mod-Impl '(SKI-Y SKI-Mod-Impl-Maker))
-(translate-lambda-to-ski 'SKI-Mod (template (fn [x# y#] (SKI-Mod-Impl (SKI-Cons x# (SKI-Cons y# SKI-Nil))))))
-
-(to-int (SKI-Mod SKI-Seven SKI-Five))
-(to-int (SKI-Mod SKI-Five SKI-Seven))
-(to-int (SKI-Mod SKI-Five SKI-Five))
-
-;(defn eratosthenes-sieve-maker [f] (fn [l] (if (empty? l) '()  (cons (first l) (f (filter (fn [x] (not (= 0 (mod x (first l))))) l))))))
-
-(translate-lambda-to-ski 'SKI-Eratosthenes-Sieve-Maker (template (fn [f#] (fn [l#] (SKI-If (SKI-Nil? l#) SKI-Nil (SKI-Cons (SKI-Head l#) (f# (SKI-Filter (fn [x#] (SKI-Not (SKI-Eq?  SKI-Zero (SKI-Mod x# (SKI-Head l#))))) l#))))))))
-(translate-lambda-to-ski 'SKI-Eratosthenes-Sieve '(SKI-Y SKI-Eratosthenes-Sieve-Maker))
-(to-int-list (SKI-Eratosthenes-Sieve (SKI-Tail (SKI-ConsRangeList SKI-Ten))))
 
 ;;;;;;;;;;;;;;;     print all sources and all translations     ;;;;;;;;;;;;;;;
 

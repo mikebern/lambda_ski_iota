@@ -57,7 +57,7 @@
          (cond
            (> (count args) num-args) (apply (apply fnct (take num-args args)) (drop num-args args))
            (= (count args) num-args) (apply fnct args)
-           :else (variadize-strict (reduce (fn [f x] (partial f x)) fnct args) (- num-args (count args))))))))
+           :else (variadize-strict (reduce partial fnct args) (- num-args (count args))))))))
 
 (defn variadize
   ([fnct] (variadize fnct (arg-count fnct)))
@@ -68,7 +68,7 @@
            (> (count args) num-args)
            (DelayedEval. (delay (apply (apply fnct (take num-args args)) (drop num-args args))))
            (= (count args) num-args) (DelayedEval. (delay (apply fnct args)))
-           :else (variadize (reduce (fn [f x] (partial f x)) fnct args) (- num-args (count args))))))))
+           :else (variadize (reduce partial fnct args) (- num-args (count args))))))))
 
 (defn S-def [f g x] (f x (g x)))
 (def S (variadize S-def))
