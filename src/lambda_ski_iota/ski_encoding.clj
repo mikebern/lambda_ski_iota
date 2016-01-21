@@ -322,7 +322,7 @@
 ; Implementation of Concat function for two lists using SKI-Reduce
 (translate-lambda-to-ski 'SKI-L3 '(SKI-Cons SKI-Four (SKI-Cons SKI-Five (SKI-Cons SKI-Six SKI-Nil))))
 
-;appends two lists - notice that the lists should be passed to SKI-Reduce in the reversed order - SKI-Reduce is foldr
+; Concatenation of two lists - notice that the lists should be passed to SKI-Reduce in the reversed order - SKI-Reduce is foldr
 (translate-lambda-to-ski 'SKI-Concat (template (fn [l1# l2#] (SKI-Reduce SKI-Cons l2# l1#))))
 (to-int-list (SKI-Concat SKI-L1 SKI-L3))
 (to-int-list (SKI-Concat SKI-L1 (SKI-Cons (SKI-Plus SKI-One SKI-One) SKI-Nil)))
@@ -332,6 +332,17 @@
 (translate-lambda-to-ski 'SKI-Length (template (fn [l#] (SKI-Reduce SKI-Reducer-Length SKI-Zero l#))))
 
 (to-int (SKI-Length SKI-L1))
+
+; Implementation of Apply using Reduce - we apply one argument at a time
+; Ski-Test-Sum sums three elements. We use Apply to apply this function to a list containing 3 elements
+(translate-lambda-to-ski 'SKI-Test-Sum (template (fn (f# s# t#) (SKI-Plus f#  (SKI-Plus s# t#)))))
+(to-int (((SKI-Test-Sum SKI-One) SKI-Two) SKI-Three))
+
+
+(translate-lambda-to-ski 'SKI-Apply (template (fn [f# l#] (SKI-Reduce (fn [x# y#] (y# x#)) f# l#))))
+; apply SKI-Test-Sum to a list of three elements
+(to-int (SKI-Apply SKI-Test-Sum SKI-L1))
+
 
 ; Implementation of Map using SKI-Reduce
 (translate-lambda-to-ski 'SKI-Reducer-Map (template (fn [f# x# y#] (SKI-Cons (f# x#) y#))))
@@ -397,6 +408,7 @@
 
 (translate-lambda-to-ski 'SKI-Eratosthenes-Sieve-Maker (template (fn [f#] (fn [l#] (SKI-If (SKI-Nil? l#) SKI-Nil (SKI-Cons (SKI-Head l#) (f# (SKI-Filter (fn [x#] (SKI-Not (SKI-Eq?  SKI-Zero (SKI-Mod x# (SKI-Head l#))))) l#))))))))
 (translate-lambda-to-ski 'SKI-Eratosthenes-Sieve '(SKI-Y SKI-Eratosthenes-Sieve-Maker))
+; throw away 1, otherwise we end up with an empty list, because 1 divides every integer.
 (to-int-list (SKI-Eratosthenes-Sieve (SKI-Tail (SKI-ConsRangeList SKI-Ten))))
 
 
@@ -404,13 +416,7 @@
 ;;;;;;;;;;;;;;;     Y*-combinator     ;;;;;;;;;;;;;;;
 
 ; http://stackoverflow.com/questions/4899113/fixed-point-combinator-for-mutually-recursive-functions
-; an implementation of Apply using reduce - we apply one argument at a time
-; Ski-Test-Sum sums three elements. We use Apply to apply this function to a list containing 3 elements
-(translate-lambda-to-ski 'SKI-Apply (template (fn [f# l#] (SKI-Reduce (fn [x# y#] (y# x#)) f# l#))))
-(translate-lambda-to-ski 'SKI-Test-Sum (template (fn (f# s# t#) (SKI-Plus f#  (SKI-Plus s# t#)))))
 
-(to-int (((SKI-Test-Sum SKI-One) SKI-Two) SKI-Three))
-(to-int (SKI-Apply SKI-Test-Sum SKI-L1))
 
 (translate-lambda-to-ski 'SKI-Make-Even?  (template (fn [e-and-o#] (fn [n#] (SKI-Or (SKI-Eq?  SKI-Zero n#) ((SKI-Second-Elem e-and-o#) (SKI-Minus n# SKI-One)))))))
 (translate-lambda-to-ski 'SKI-Make-Odd?  (template (fn [e-and-o#] (fn [n#] (SKI-And (SKI-Not (SKI-Eq?  SKI-Zero n#)) ((SKI-Head e-and-o#) (SKI-Minus n# SKI-One)))))))
@@ -428,18 +434,42 @@
                                                      (p# p#))))
                                                  fs#))))))
 
-((((SKI-Head (SKI-Y* (SKI-Cons SKI-Make-Even? (SKI-Cons SKI-Make-Odd? SKI-Nil)))) SKI-Four) "true" "false"))
-((((SKI-Second-Elem (SKI-Y* (SKI-Cons SKI-Make-Even? (SKI-Cons SKI-Make-Odd? SKI-Nil)))) SKI-Four) "true" "false"))
 
-((((SKI-Head (SKI-Y* SKI-Even-Odd)) SKI-Four) "true" "false"))
-((((SKI-Second-Elem (SKI-Y* SKI-Even-Odd)) SKI-Four) "true" "false"))
+(to-bool ((SKI-Head (SKI-Y* (SKI-Cons SKI-Make-Even? (SKI-Cons SKI-Make-Odd? SKI-Nil)))) SKI-Four))
+(to-bool ((SKI-Second-Elem (SKI-Y* (SKI-Cons SKI-Make-Even? (SKI-Cons SKI-Make-Odd? SKI-Nil)))) SKI-Four))
 
+(to-bool ((SKI-Head (SKI-Y* SKI-Even-Odd)) SKI-Four))
+(to-bool ((SKI-Second-Elem (SKI-Y* SKI-Even-Odd)) SKI-Four))
+
+; use convenience functions
 (translate-lambda-to-ski 'SKI-Even? '(SKI-Head (SKI-Y* SKI-Even-Odd)))
 (translate-lambda-to-ski 'SKI-Odd? '(SKI-Second-Elem (SKI-Y* SKI-Even-Odd)))
 
 (to-bool (SKI-Even? SKI-Five))
 (to-bool (SKI-Odd? SKI-Five))
 
+
+
+(translate-lambda-to-ski 'SKI-FunkyMap (template (fn [f# l#]
+
+                                              (SKI-Head (SKI-Y*
+                                                (SKI-Cons
+                                                (fn [r#]
+                                                  (fn [m#]
+                                                    (SKI-If (SKI-Nil? m#) SKI-Nil
+                                                            (SKI-Cons  (SKI-Head m#) ((SKI-Second-Elem r#) (SKI-Tail m#))))))
+                                                (SKI-Cons
+                                                (fn [r#]
+                                                  (fn [m#]
+                                                    (SKI-If (SKI-Nil? m#) SKI-Nil
+                                                            (SKI-Cons  (f# (SKI-Head m#)) ((SKI-Head r#) (SKI-Tail m#))))))
+
+                                                 SKI-Nil))
+
+                                                 ) l#))))
+
+
+(to-int-list ( SKI-FunkyMap (fn [x] (SKI-Mul x SKI-Seven)) (SKI-ConsRangeList SKI-Ten)))
 
 ;;;;;;;;;;;;;;;     print all sources and all translations     ;;;;;;;;;;;;;;;
 
