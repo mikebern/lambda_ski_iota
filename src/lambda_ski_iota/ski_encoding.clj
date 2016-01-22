@@ -394,6 +394,7 @@
 (translate-lambda-to-ski 'SKI-QuickSort '(SKI-Y SKI-QuickSort-Maker))
 (to-int-list (SKI-QuickSort SKI-L-Not-Sorted))
 
+(get @ski-translations 'SKI-QuickSort)
 
 ; Sieve of Eratosthenes
 (translate-lambda-to-ski 'SKI-Mod-Impl-Maker (template  (fn [f#] (fn [p#] (SKI-If (SKI-Lt? (SKI-Head p#) (SKI-Second-Elem p#)) (SKI-Head p#) (f# (SKI-Cons (SKI-Minus (SKI-Head p#) (SKI-Second-Elem p#)) (SKI-Cons (SKI-Second-Elem p#) SKI-Nil))))))))
