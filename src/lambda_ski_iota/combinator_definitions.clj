@@ -29,15 +29,13 @@
 ; a less fancy way to generate DelayedEval
 ;(defrecord DelayedEval [delayed-exp]
 ;  clojure.lang.IFn
-;  (invoke [this] (let [exp (force delayed-exp)] (if ( instance? DelayedEval exp) (exp) exp)))
+;  (invoke [this] (let [exp (force delayed-exp)] (if (instance? DelayedEval exp) (exp) exp)))
 
 ;  (invoke [this arg] ((force delayed-exp) arg))
 ;  (invoke [this arg arg2] ((force delayed-exp) arg arg2))
 ;  (invoke [this arg arg2 arg3] ((force delayed-exp) arg arg2 arg3))
 ;  (invoke [this arg arg2 arg3 arg4] ((force delayed-exp) arg arg2 arg3 arg4))
-;  (applyTo [this args] (apply (force delayed-exp) args))
-;)
-
+;  (applyTo [this args] (apply (force delayed-exp) args)))
 
 ; extracts value from a DelayedEval expression
 (defn get-val [delayed-val] (if (instance? DelayedEval delayed-val) (delayed-val) delayed-val))

@@ -338,11 +338,9 @@
 (translate-lambda-to-ski 'SKI-Test-Sum (template (fn (f# s# t#) (SKI-Plus f#  (SKI-Plus s# t#)))))
 (to-int (((SKI-Test-Sum SKI-One) SKI-Two) SKI-Three))
 
-
 (translate-lambda-to-ski 'SKI-Apply (template (fn [f# l#] (SKI-Reduce (fn [x# y#] (y# x#)) f# l#))))
 ; apply SKI-Test-Sum to a list of three elements
 (to-int (SKI-Apply SKI-Test-Sum SKI-L1))
-
 
 ; Implementation of Map using SKI-Reduce
 (translate-lambda-to-ski 'SKI-Reducer-Map (template (fn [f# x# y#] (SKI-Cons (f# x#) y#))))
@@ -361,7 +359,6 @@
 (translate-lambda-to-ski 'SKI-Filter-Ex1 (template (fn [x#] (SKI-Not (SKI-Eq?  x# SKI-Five)))))
 (to-int-list (SKI-Filter2 SKI-Filter-Ex1 (SKI-ConsRangeList SKI-Ten)))
 
-
 ; Ackermann
 
 ;(defn ackermann-maker [a] (fn [x] (if (= (first x) 0) (inc (second x))
@@ -378,7 +375,6 @@
 (translate-lambda-to-ski 'SKI-Ackermann '(SKI-Y SKI-Ackermann-Maker))
 
 (to-int (SKI-Ackermann (SKI-Cons SKI-Three (SKI-Cons SKI-Four SKI-Nil))))
-
 
 ; QuickSort
 ;(defn quicksort-maker [f]  (fn [x]  (if (empty? x) '() (concat (f (filter (fn [y1] (< y1 (first x))) x))
@@ -412,8 +408,6 @@
 ; throw away 1, otherwise we end up with an empty list, because 1 divides every integer.
 (to-int-list (SKI-Eratosthenes-Sieve (SKI-Tail (SKI-ConsRangeList SKI-Ten))))
 
-
-
 ;;;;;;;;;;;;;;;     Y*-combinator     ;;;;;;;;;;;;;;;
 
 ; http://stackoverflow.com/questions/4899113/fixed-point-combinator-for-mutually-recursive-functions
@@ -435,7 +429,6 @@
                                                      (p# p#))))
                                                  fs#))))))
 
-
 (to-bool ((SKI-Head (SKI-Y* (SKI-Cons SKI-Make-Even? (SKI-Cons SKI-Make-Odd? SKI-Nil)))) SKI-Four))
 (to-bool ((SKI-Second-Elem (SKI-Y* (SKI-Cons SKI-Make-Even? (SKI-Cons SKI-Make-Odd? SKI-Nil)))) SKI-Four))
 
@@ -449,28 +442,23 @@
 (to-bool (SKI-Even? SKI-Five))
 (to-bool (SKI-Odd? SKI-Five))
 
-
-
 (translate-lambda-to-ski 'SKI-FunkyMap (template (fn [f# l#]
 
-                                              (SKI-Head (SKI-Y*
-                                                (SKI-Cons
-                                                (fn [r#]
-                                                  (fn [m#]
-                                                    (SKI-If (SKI-Nil? m#) SKI-Nil
-                                                            (SKI-Cons  (SKI-Head m#) ((SKI-Second-Elem r#) (SKI-Tail m#))))))
-                                                (SKI-Cons
-                                                (fn [r#]
-                                                  (fn [m#]
-                                                    (SKI-If (SKI-Nil? m#) SKI-Nil
-                                                            (SKI-Cons  (f# (SKI-Head m#)) ((SKI-Head r#) (SKI-Tail m#))))))
+                                                   (SKI-Head (SKI-Y*
+                                                              (SKI-Cons
+                                                               (fn [r#]
+                                                                 (fn [m#]
+                                                                   (SKI-If (SKI-Nil? m#) SKI-Nil
+                                                                           (SKI-Cons  (SKI-Head m#) ((SKI-Second-Elem r#) (SKI-Tail m#))))))
+                                                               (SKI-Cons
+                                                                (fn [r#]
+                                                                  (fn [m#]
+                                                                    (SKI-If (SKI-Nil? m#) SKI-Nil
+                                                                            (SKI-Cons  (f# (SKI-Head m#)) ((SKI-Head r#) (SKI-Tail m#))))))
 
-                                                 SKI-Nil))
+                                                                SKI-Nil))) l#))))
 
-                                                 ) l#))))
-
-
-(to-int-list ( SKI-FunkyMap (fn [x] (SKI-Mul x SKI-Seven)) (SKI-ConsRangeList SKI-Ten)))
+(to-int-list (SKI-FunkyMap (fn [x] (SKI-Mul x SKI-Seven)) (SKI-ConsRangeList SKI-Ten)))
 
 ;;;;;;;;;;;;;;;     print all sources and all translations     ;;;;;;;;;;;;;;;
 
