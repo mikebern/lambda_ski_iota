@@ -63,3 +63,6 @@
 
 (get iota-translations 'X-Y*)
 (get iota-translations 'X-FortyTwo)
+
+(to-int-list (X-Cons X-One (X-Cons X-Two (X-Cons X-Three X-Nil)))) ; (1,2,3)
+
