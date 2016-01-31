@@ -5,7 +5,6 @@
 
 ;;;;;;;;;;;;;;;     To Iota translation     ;;;;;;;;;;;;;;;
 
-(def iota-mapping {'S "(X (X (X (X X))))", 'K "(X (X (X X)))", 'I "(X X)"})
 
 (defn modify-func-name [func-name, from, to]
   (let [from-escaped  (clojure.string/replace (clojure.string/replace  from "*" "\\*") "?" "\\?")]
@@ -14,14 +13,17 @@
 ; example
 (modify-func-name "SKI-If" "SKI" "X")
 
-(defn translate-ski-to-iota [ski-definitions iota-mapping]
-  (into {} (for [[k v] ski-definitions] [(symbol (modify-func-name k "SKI" "X")) (substitute-translations iota-mapping v)])))
+(defn translate-definitions [source-definitions translator prefix-from prefix-to]
+  (into {} (for [[k v] source-definitions] [(symbol (modify-func-name k prefix-from prefix-to)) (translator v)])))
 
-(def iota-translations (translate-ski-to-iota @ski-translations iota-mapping))
+(def iota-mapping {'S "(X (X (X (X X))))", 'K "(X (X (X X)))", 'I "(X X)"})
 
-; instantiate all translations
-(defn instantiate-iota [iota-translations] (doall (map (fn [[k v]] (gen-def k v))  iota-translations)))
-(instantiate-iota iota-translations)
+(def iota-translations (translate-definitions @ski-translations (partial substitute-translations iota-mapping) "SKI" "X" ))
+
+; instantiate all definitions
+(defn instantiate-definitions [definitions] (doall (map (fn [[k v]] (gen-def k v))  definitions)))
+
+(instantiate-definitions iota-translations)
 
 ;;;;;;;;;;;;;;;     Examples     ;;;;;;;;;;;;;;;
 
